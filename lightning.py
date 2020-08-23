@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from progress.spinner import Spinner
 import ntpath
 
+
 def make_safe(unsafe_string):
     return "".join([c for c in unsafe_string if c.isalpha() or c.isdigit()]).rstrip()
 
