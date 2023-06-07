@@ -15,13 +15,13 @@ def make_safe(unsafe_string):
 
 parser = argparse.ArgumentParser(description='Extract lightning frames from a video.')
 parser.add_argument('video_file_name', type=str,
-                   help='The file with the lightning in it')
+                    help='The file with the lightning in it')
 parser.add_argument('--threshold', dest='threshold', action='store',
-                   default=10,
-                   help='Use a non-default (default is 10) threshold for detirming what a lightning flash is.')
+                    default=10,
+                    help='Use a non-default (default is 10) threshold for detirming what a lightning flash is.')
 
 parser.add_argument('--outfolder', dest='outfolder', action='store',
-                   help='Specify a folder for the frames and data to be saved to.')
+                    help='Specify a folder for frames & data to be saved to.')
 
 args = parser.parse_args()
 
@@ -38,7 +38,6 @@ if __name__ == '__main__':
         print(f"File not found: {VIDEO_FILE_NAME}")
         print("Exiting...")
         exit(404)
-
 
     if not args.outfolder:
         OUTFOLDER = f"{ntpath.dirname(VIDEO_FILE_NAME)}/{ make_safe(ntpath.basename(VIDEO_FILE_NAME))}__OUTPUT"
@@ -80,13 +79,19 @@ if __name__ == '__main__':
     print(f"Ending at: {datetime.datetime.now().isoformat()}")
     
     if len(frame_data) == 0:
-        print(f"Looks like no data was found, was this file location ok?:{VIDEO_FILE_NAME}")
+        print(f"No data was found, this file location ok?:{VIDEO_FILE_NAME}")
         exit(400)
 
-    df = pd.DataFrame(frame_data, columns=["frame_num", "brightness", "stored_image"] )
+    df = pd.DataFrame(frame_data, columns=[
+        "frame_num",
+        "brightness",
+        "stored_image"])
 
     print(df)
-    df.to_csv(f"{OUTFOLDER}/frame_brighness_data.csv", columns=["frame_num", "brightness", "stored_image"], index=False)
+    df.to_csv(f"{OUTFOLDER}/frame_brighness_data.csv", columns=["frame_num",
+                                                                "brightness",
+                                                                "stored_image"
+                                                                ], index=False)
 
     df.plot(x="frame_num", y="brightness")
     plt.show()
