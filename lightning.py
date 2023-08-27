@@ -18,14 +18,14 @@ parser.add_argument('video_file_name', type=str,
                     help='The file with the lightning in it')
 parser.add_argument('--threshold', dest='threshold', action='store',
                     default=10,
-                    help='Use a non-default (default is 10) threshold for detirming what a lightning flash is.')
+                    help='Use a non-default (default is 10) threshold for detirmining what a lightning flash is.')
 
 parser.add_argument('--outfolder', dest='outfolder', action='store',
                     help='Specify a folder for frames & data to be saved to.')
 
 args = parser.parse_args()
 
-THRESHOLD = args.threshold
+THRESHOLD = float(args.threshold)
 VIDEO_FILE_NAME = args.video_file_name
 
 print(f"Using Threshold: {THRESHOLD}")
@@ -40,13 +40,15 @@ if __name__ == '__main__':
         exit(404)
 
     if not args.outfolder:
-        OUTFOLDER = f"{ntpath.dirname(VIDEO_FILE_NAME)}/{ make_safe(ntpath.basename(VIDEO_FILE_NAME))}__OUTPUT"
+        OUTFOLDER = f"{make_safe(ntpath.basename(VIDEO_FILE_NAME))}__OUTPUT"
+        if ntpath.dirname(VIDEO_FILE_NAME):
+            OUTFOLDER = f"{ntpath.dirname(VIDEO_FILE_NAME)}/{OUTFOLDER}"
     else:
         OUTFOLDER = args.outfolder
 
     print(f"Output going to folder: {OUTFOLDER}")
 
-    print(f"Starting at: {datetime.datetime.now().isoformat()}")    
+    print(f"Starting at: {datetime.datetime.now().isoformat()}")
 
     if not os.path.isdir(OUTFOLDER):
         os.makedirs(OUTFOLDER, exist_ok=True)
@@ -57,6 +59,11 @@ if __name__ == '__main__':
     frame_data = []
     spinner = Spinner('Processing ')
 
+    last_mean_brightness = None
+    frames_to_keep = {}
+    temp_rec_count = 0
+    temp_rec = False
+
     while (cap.isOpened()):
 
         ret, frame = cap.read()
@@ -65,14 +72,31 @@ if __name__ == '__main__':
             break
 
         mean_brightness = np.mean(frame)
-        store_frame = mean_brightness > THRESHOLD
+        
+        if last_mean_brightness is not None:
+            diff_brightness = abs(mean_brightness-last_mean_brightness)
+            percent_diff = (diff_brightness/mean_brightness)*100
 
-        if store_frame:
-            cv2.imwrite(f"{OUTFOLDER}/frame_{str(frame_num)}.jpg", frame)
+            if percent_diff > THRESHOLD:
+                temp_rec_count = 4
+                temp_rec = True
 
-        frame_data.append([frame_num, mean_brightness, store_frame])
+            if temp_rec or temp_rec_count > 0:
+                frames_to_keep[frame_num] = frame
+                print(f"Added frame number: {frame_num}, % diff={percent_diff}, temp_rec_count={temp_rec_count}")
+                temp_rec_count -= 1
+                temp_rec = False
+
+            frame_data.append([frame_num, mean_brightness, percent_diff])
         frame_num += 1
+        last_mean_brightness = mean_brightness
+        last_frame_num = frame_num
+        last_frame = frame
+
         spinner.next()
+
+    for frame_id in frames_to_keep:
+        cv2.imwrite(f"{OUTFOLDER}/frame_{str(frame_id)}.jpg", frames_to_keep[frame_id])
 
     cap.release()
     cv2.destroyAllWindows()
@@ -85,14 +109,14 @@ if __name__ == '__main__':
     df = pd.DataFrame(frame_data, columns=[
         "frame_num",
         "brightness",
-        "stored_image"])
+        "percent_diff"])
 
     print(df)
     df.to_csv(f"{OUTFOLDER}/frame_brighness_data.csv", columns=["frame_num",
                                                                 "brightness",
-                                                                "stored_image"
+                                                                "percent_diff"
                                                                 ], index=False)
 
     df.plot(x="frame_num", y="brightness")
-    plt.show()
     plt.savefig(f"{OUTFOLDER}/frame_brighness_data.pdf")
+
