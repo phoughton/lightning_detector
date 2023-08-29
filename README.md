@@ -4,12 +4,12 @@ Detects lightning from video files, and saves frames that contain the lightning.
 
 With the write video you can capture images like these:
 
-![](docs/example_capture_1.png)
+![](docs/example_capture_3.jpg)
 
 
 The `ffmpeg_avicon` script will attempt to convert your video into something the python script can work with.
 
-You will have to install ffmpeg, and the ffmpeg script assumes linux/*nix or use the docker image in this repository.
+You will have to install ffmpeg, and the ffmpeg script assumes linux/*nix _or use the docker image in this repository_.
 
 It captures at and after a change in mean brightness greater than the threshold value.
 
