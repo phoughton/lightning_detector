@@ -34,3 +34,13 @@ python lightning.py --threshold 3 VID_20230826_1234.mp4.avi
 python lightning.py -h
 
 ```
+
+### Issues:
+1. Can produce false positives, as it captures batches after a trigger is detected
+1. Prolonged strikes may be missed, as it uses a rolling mean.
+1. Often requires cropping to isolate lightning
+
+### Potential solutions:
+1. False Positives: Isolate only valid frames, by using a Classifier on each frame
+1. Long Strikes missed/truncated: Isolate only valid frames, by using a Classifier on each frame
+1. Often requires cropping: Use a segnmentation model, and use co-ordinates to crop automatically
